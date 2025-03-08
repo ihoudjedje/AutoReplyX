@@ -1,8 +1,8 @@
 // Function to extract tweet text from the tweet element
 function extractTweetText() {
-  const tweetTextElement = document.querySelector('[data-testid="tweetText"]');
-  console.log('Tweet text element:', tweetTextElement);
-  return tweetTextElement ? tweetTextElement.textContent.trim() : '';
+  const tweetTextElement = document.querySelector('[data-testid="tweetText"]').innerText;
+  console.log('>>> tweet text:', tweetTextElement);
+  return tweetTextElement;
 }
 
 // Function to find and focus the reply input field
@@ -18,7 +18,7 @@ function focusReplyInput() {
   for (const selector of selectors) {
     const replyInput = document.querySelector(selector);
     if (replyInput) {
-      console.log('Found reply input:', selector);
+      console.log('>>> Found reply input:', selector);
       replyInput.focus();
       return replyInput;
     }
@@ -36,7 +36,7 @@ function setReplyText(inputElement, text) {
   if (inputElement && !isProcessing) {
     try {
       isProcessing = true;
-      console.log('Setting reply text:', text);
+      console.log('>>> Setting reply text:', text);
       
       // Remove the "autox" trigger
       const currentText = inputElement.textContent;
@@ -74,7 +74,7 @@ function handleTextChange(element) {
   
   const text = element.textContent || '';
   if (text.toLowerCase().includes('autox')) {
-    console.log('autox trigger detected');
+    console.log('>>> autox trigger detected');
     const tweetText = extractTweetText();
     if (tweetText) {
       const response = generateHardcodedReply(tweetText);
