@@ -1,0 +1,24 @@
+{
+  "manifest_version": 3,
+  "name": "X AI Reply Generator",
+  "version": "1.0",
+  "description": "Automatically generate AI replies for X posts",
+  "permissions": [
+    "activeTab",
+    "scripting"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["https://twitter.com/*", "https://x.com/*"],
+      "js": ["content.js"],
+      "run_at": "document_end"
+    }
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "icons": {
+    "48": "icon48.png",
+    "128": "icon128.png"
+  }
+}
