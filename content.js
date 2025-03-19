@@ -5,6 +5,34 @@ function extractTweetText() {
   return tweetTextElement;
 }
 
+// Function to generate a reply using Ollama via background script
+async function generateOllamaReply(tweetText) {
+  try {
+    console.log('>>> Sending tweet to background script:', tweetText);
+    
+    // Send message to background script
+    const response = await chrome.runtime.sendMessage({
+      action: 'generateReply',
+      tweet: tweetText
+    });
+    
+    console.log('>>> Ollama response from background:', response);
+    
+    if (response && response.success) {
+      return response.reply.trim();
+    } else {
+      console.error('>>> Failed to generate reply:', {
+        response: response,
+        error: response?.error
+      });
+      return "Thanks for sharing! 🙌"; // Fallback response
+    }
+  } catch (error) {
+    console.error('>>> Error in generateOllamaReply:', error);
+    return "Thanks for sharing! 🙌"; // Fallback response
+  }
+}
+
 // Function to find and focus the reply input field
 function focusReplyInput() {
   // Try multiple possible selectors for the reply input, from most specific to least specific
@@ -63,13 +91,8 @@ function setReplyText(inputElement, text) {
   }
 }
 
-// Function to generate a hardcoded reply based on tweet content
-function generateHardcodedReply(tweetText) {
-  return "Thanks for sharing these valuable insights! Looking forward to more discussions! 🙌";
-}
-
 // Function to handle text changes
-function handleTextChange(element) {
+async function handleTextChange(element) {
   if (isProcessing) return; // Skip if already processing
   
   const text = element.textContent || '';
@@ -77,7 +100,7 @@ function handleTextChange(element) {
     console.log('>>> autox trigger detected');
     const tweetText = extractTweetText();
     if (tweetText) {
-      const response = generateHardcodedReply(tweetText);
+      const response = await generateOllamaReply(tweetText);
       setReplyText(element, response);
     }
   }
