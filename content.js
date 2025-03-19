@@ -52,18 +52,74 @@ function setReplyText(inputElement, text) {
     try {
       isProcessing = true;
 
-      const currentText = inputElement.textContent;
-      const cleanText = currentText.replace('autox', '').trim();
+      // Use execCommand to modify the content in a way that the editor will recognize
+      const selection = window.getSelection();
+      const range = document.createRange();
 
-      const newText = cleanText + (cleanText ? ' ' : '') + text;
+      // First, select the entire content
+      range.selectNodeContents(inputElement);
+      selection.removeAllRanges();
+      selection.addRange(range);
 
-      inputElement.textContent = newText;
-      inputElement.dispatchEvent(new InputEvent('input', {
+      // Get current text and find the position of "autox"
+      const currentText = inputElement.textContent || '';
+      const autoxIndex = currentText.toLowerCase().indexOf('autox');
+
+      if (autoxIndex >= 0) {
+        // Create a range that only selects "autox"
+        const autoxRange = document.createRange();
+        let textNode = null;
+
+        // Find the text node containing "autox"
+        for (let i = 0; i < inputElement.childNodes.length; i++) {
+          const node = inputElement.childNodes[i];
+          if (node.nodeType === Node.TEXT_NODE && node.textContent.toLowerCase().includes('autox')) {
+            textNode = node;
+            break;
+          }
+        }
+
+        if (textNode) {
+          const nodeText = textNode.textContent;
+          const nodeAutoxIndex = nodeText.toLowerCase().indexOf('autox');
+
+          // Create a range selecting just the "autox" text
+          autoxRange.setStart(textNode, nodeAutoxIndex);
+          autoxRange.setEnd(textNode, nodeAutoxIndex + 5); // "autox" is 5 characters
+
+          // Select just the "autox" text
+          selection.removeAllRanges();
+          selection.addRange(autoxRange);
+
+          // Replace the selected text with our LLM response
+          document.execCommand('insertText', false, text);
+        } else {
+          // Fallback if we can't find the text node
+          const cleanText = currentText.replace(/autox/i, text);
+          document.execCommand('insertText', false, cleanText);
+        }
+      } else {
+        // If "autox" isn't found, just append the text
+        document.execCommand('insertText', false, text);
+      }
+
+      // Dispatch native input event to ensure Twitter's listeners catch it
+      const inputEvent = new InputEvent('input', {
         bubbles: true,
         cancelable: true,
         inputType: 'insertText',
-        data: newText
-      }));
+        data: text,
+        composed: true
+      });
+
+      // Fire the event
+      inputElement.dispatchEvent(inputEvent);
+
+      // Blur and refocus to ensure Twitter registers the change
+      inputElement.blur();
+      setTimeout(() => {
+        inputElement.focus();
+      }, 10);
 
     } finally {
       setTimeout(() => {
