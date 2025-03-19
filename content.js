@@ -61,19 +61,19 @@ function setReplyText(inputElement, text) {
       selection.removeAllRanges();
       selection.addRange(range);
 
-      // Get current text and find the position of "autox"
+      // Get current text and find the position of "xxx"
       const currentText = inputElement.textContent || '';
-      const autoxIndex = currentText.toLowerCase().indexOf('autox');
+      const autoxIndex = currentText.toLowerCase().indexOf('xxx');
 
       if (autoxIndex >= 0) {
-        // Create a range that only selects "autox"
+        // Create a range that only selects "xxx"
         const autoxRange = document.createRange();
         let textNode = null;
 
-        // Find the text node containing "autox"
+        // Find the text node containing "xxx"
         for (let i = 0; i < inputElement.childNodes.length; i++) {
           const node = inputElement.childNodes[i];
-          if (node.nodeType === Node.TEXT_NODE && node.textContent.toLowerCase().includes('autox')) {
+          if (node.nodeType === Node.TEXT_NODE && node.textContent.toLowerCase().includes('xxx')) {
             textNode = node;
             break;
           }
@@ -81,13 +81,13 @@ function setReplyText(inputElement, text) {
 
         if (textNode) {
           const nodeText = textNode.textContent;
-          const nodeAutoxIndex = nodeText.toLowerCase().indexOf('autox');
+          const nodeAutoxIndex = nodeText.toLowerCase().indexOf('xxx');
 
-          // Create a range selecting just the "autox" text
+          // Create a range selecting just the "xxx" text
           autoxRange.setStart(textNode, nodeAutoxIndex);
-          autoxRange.setEnd(textNode, nodeAutoxIndex + 5); // "autox" is 5 characters
+          autoxRange.setEnd(textNode, nodeAutoxIndex + 5); // "xxx" is 5 characters
 
-          // Select just the "autox" text
+          // Select just the "xxx" text
           selection.removeAllRanges();
           selection.addRange(autoxRange);
 
@@ -95,11 +95,11 @@ function setReplyText(inputElement, text) {
           document.execCommand('insertText', false, text);
         } else {
           // Fallback if we can't find the text node
-          const cleanText = currentText.replace(/autox/i, text);
+          const cleanText = currentText.replace(/xxx/i, text);
           document.execCommand('insertText', false, cleanText);
         }
       } else {
-        // If "autox" isn't found, just append the text
+        // If "xxx" isn't found, just append the text
         document.execCommand('insertText', false, text);
       }
 
@@ -134,7 +134,7 @@ async function handleTextChange(element) {
   if (isProcessing) return; // Skip if already processing
 
   const text = element.textContent || '';
-  if (text.toLowerCase().includes('autox')) {
+  if (text.toLowerCase().includes('xxx')) {
     const tweetText = extractTweetText();
     if (tweetText) {
       const response = await generateReply(tweetText);
