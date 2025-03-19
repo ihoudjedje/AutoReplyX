@@ -18,11 +18,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             'Authorization': `Bearer ${AWANLLM_API_KEY}`
           },
           body: JSON.stringify({
-            model: 'Meta-Llama-3-8B-Instruct',
+            model: 'Meta-Llama-3.1-70B-Instruct',
             messages: [
               {
                 role: 'system',
-                content: 'You are a friendly and engaging social media user. Generate concise replies (max 280 characters) that are relevant, add value to the conversation, and include appropriate emojis where it makes sense. Be natural and conversational.'
+                content: 'You are a friendly and engaging social media user. Generate concise replies (max 280 characters) that are relevant, add value to the conversation. Do NOT include emojis or hashtags. Be natural and conversational. Return only the reply text, without double quotes.'
               },
               {
                 role: 'user',
