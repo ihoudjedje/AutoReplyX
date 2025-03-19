@@ -1,7 +1,12 @@
 // Function to extract tweet text from the tweet element
 function extractTweetText() {
-  const tweetTextElement = document.querySelector('[data-testid="tweetText"]').innerText;
-  return tweetTextElement;
+  try {
+    const tweetTextElement = document.querySelector('[data-testid="tweetText"]')?.innerText;
+    return tweetTextElement || "No tweet text found";
+  } catch (error) {
+    console.error("Error extracting tweet text:", error);
+    return "No tweet text found";
+  }
 }
 
 // Function to generate a reply using AI via background script
@@ -18,167 +23,111 @@ async function generateReply(tweetText) {
       return "AutoX Internal Error";
     }
   } catch (error) {
+    console.error("Error generating reply:", error);
     return "AutoX Internal Error";
   }
-}
-
-// Function to find and focus the reply input field
-function focusReplyInput() {
-  // Try multiple possible selectors for the reply input, from most specific to least specific
-  const selectors = [
-    '.DraftEditor-root .notranslate.public-DraftEditor-content[contenteditable="true"][role="textbox"]',
-    '.public-DraftEditor-content[contenteditable="true"][role="textbox"]',
-    '.DraftEditor-root [contenteditable="true"]',
-    '[data-testid="tweetTextarea_0"]'
-  ];
-
-  for (const selector of selectors) {
-    const replyInput = document.querySelector(selector);
-    if (replyInput) {
-      replyInput.focus();
-      return replyInput;
-    }
-  }
-
-  return null;
 }
 
 // Flag to prevent multiple triggers
 let isProcessing = false;
 
-// Function to set text in the input field
-function setReplyText(inputElement, text) {
-  if (inputElement && !isProcessing) {
-    try {
-      isProcessing = true;
+// Function to insert text at the cursor position
+function insertTextAtCursor(inputElement, text) {
+  if (!inputElement || !inputElement.isContentEditable || isProcessing) return false;
 
-      // Use execCommand to modify the content in a way that the editor will recognize
+  try {
+    isProcessing = true;
+
+    // First insert placeholder
+    const placeholder = "...";
+    document.execCommand('insertText', false, placeholder);
+
+    // Replace placeholder with response
+    const currentText = inputElement.textContent || '';
+    if (currentText.includes(placeholder)) {
+      // Select all content
       const selection = window.getSelection();
       const range = document.createRange();
-
-      // First, select the entire content
       range.selectNodeContents(inputElement);
       selection.removeAllRanges();
       selection.addRange(range);
 
-      // Get current text and find the position of "xxx"
-      const currentText = inputElement.textContent || '';
-      const autoxIndex = currentText.toLowerCase().indexOf('xxx');
+      // Replace placeholder with response
+      const updatedText = currentText.replace(placeholder, text);
+      document.execCommand('insertText', false, updatedText);
 
-      if (autoxIndex >= 0) {
-        // Create a range that only selects "xxx"
-        const autoxRange = document.createRange();
-        let textNode = null;
+      // Dispatch input event to ensure Twitter registers the change
+      inputElement.dispatchEvent(new InputEvent('input', {
+        bubbles: true,
+        cancelable: true,
+        inputType: 'insertText',
+        data: updatedText,
+        composed: true
+      }));
 
-        // Find the text node containing "xxx"
-        for (let i = 0; i < inputElement.childNodes.length; i++) {
-          const node = inputElement.childNodes[i];
-          if (node.nodeType === Node.TEXT_NODE && node.textContent.toLowerCase().includes('xxx')) {
-            textNode = node;
-            break;
-          }
-        }
+      return true;
+    } else {
+      // If placeholder insertion failed, just insert the text directly
+      document.execCommand('insertText', false, text);
 
-        if (textNode) {
-          const nodeText = textNode.textContent;
-          const nodeAutoxIndex = nodeText.toLowerCase().indexOf('xxx');
-
-          // Create a range selecting just the "xxx" text
-          autoxRange.setStart(textNode, nodeAutoxIndex);
-          autoxRange.setEnd(textNode, nodeAutoxIndex + 5); // "xxx" is 5 characters
-
-          // Select just the "xxx" text
-          selection.removeAllRanges();
-          selection.addRange(autoxRange);
-
-          // Replace the selected text with our LLM response
-          document.execCommand('insertText', false, text);
-        } else {
-          // Fallback if we can't find the text node
-          const cleanText = currentText.replace(/xxx/i, text);
-          document.execCommand('insertText', false, cleanText);
-        }
-      } else {
-        // If "xxx" isn't found, just append the text
-        document.execCommand('insertText', false, text);
-      }
-
-      // Dispatch native input event to ensure Twitter's listeners catch it
-      const inputEvent = new InputEvent('input', {
+      inputElement.dispatchEvent(new InputEvent('input', {
         bubbles: true,
         cancelable: true,
         inputType: 'insertText',
         data: text,
         composed: true
-      });
+      }));
 
-      // Fire the event
-      inputElement.dispatchEvent(inputEvent);
-
-      // Blur and refocus to ensure Twitter registers the change
-      inputElement.blur();
-      setTimeout(() => {
-        inputElement.focus();
-      }, 10);
-
-    } finally {
-      setTimeout(() => {
-        isProcessing = false;
-      }, 100);
+      return true;
     }
+  } catch (error) {
+    console.error("Error inserting text:", error);
+    return false;
+  } finally {
+    setTimeout(() => {
+      isProcessing = false;
+    }, 100);
   }
 }
 
-// Function to handle text changes
-async function handleTextChange(element) {
-  if (isProcessing) return; // Skip if already processing
+// Handle keyboard shortcut (Command+X)
+async function handleKeyboardShortcut(e) {
+  // Check if Command+X (metaKey+x) was pressed
+  if (e.metaKey && e.key === 'x') {
+    e.preventDefault(); // Prevent default cut behavior
 
-  const text = element.textContent || '';
-  if (text.toLowerCase().includes('xxx')) {
-    const tweetText = extractTweetText();
-    if (tweetText) {
+    // Make sure we're in an editor
+    const activeElement = document.activeElement;
+    if (!activeElement || !activeElement.isContentEditable) {
+      return;
+    }
+
+    // Skip if already processing
+    if (isProcessing) return;
+
+    try {
+      // Extract tweet text and generate response
+      const tweetText = extractTweetText();
+      if (!tweetText || tweetText === "No tweet text found") {
+        console.error("No tweet text found to reply to");
+        return;
+      }
+
+      // Generate reply and insert at cursor
       const response = await generateReply(tweetText);
-      setReplyText(element, response);
+      insertTextAtCursor(activeElement, response);
+    } catch (error) {
+      console.error("Error handling keyboard shortcut:", error);
     }
   }
 }
 
-// Watch for input changes in any editable content
-const observer = new MutationObserver((mutations) => {
-  if (isProcessing) return; // Skip if already processing
+// Add keyboard shortcut listener
+document.addEventListener('keydown', handleKeyboardShortcut);
 
-  mutations.forEach(mutation => {
-    // Check if this is a text change in a contenteditable element
-    if (mutation.type === 'characterData') {
-      const element = mutation.target.parentElement;
-      if (element && element.closest('.public-DraftEditor-content[contenteditable="true"]')) {
-        handleTextChange(element);
-      }
-    }
-    // Also check for childList changes (for when text is pasted or modified in chunks)
-    else if (mutation.type === 'childList') {
-      const element = mutation.target.closest('.public-DraftEditor-content[contenteditable="true"]');
-      if (element) {
-        handleTextChange(element);
-      }
-    }
-  });
-});
+// Keep a minimal observer to ensure the extension stays active
+const observer = new MutationObserver(() => { });
+observer.observe(document.body, { childList: true, subtree: true });
 
-// Start observing with configuration to watch for text changes
-observer.observe(document.body, {
-  childList: true,
-  subtree: true,
-  characterData: true,
-  characterDataOldValue: true
-});
-
-// Add input event listener as a backup
-document.addEventListener('input', (e) => {
-  if (isProcessing) return; // Skip if already processing
-
-  const element = e.target.closest('.public-DraftEditor-content[contenteditable="true"]');
-  if (element) {
-    handleTextChange(element);
-  }
-});
+// Notify that extension is loaded
+console.log("AutoReplyX extension loaded with Command+X (⌘+X) shortcut enabled");
