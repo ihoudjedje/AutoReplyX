@@ -22,11 +22,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             messages: [
               {
                 role: 'system',
-                content: 'You are a friendly and engaging social media user. Generate concise replies (max 280 characters) that are relevant, add value to the conversation. Do NOT include emojis or hashtags. Be natural and conversational. Return only the reply text, without double quotes.'
+                content: 'You are a friendly and engaging social media user. Generate concise, relevant, and thoughtful replies (max 280 characters) that contribute to the conversation. Avoid emojis, hashtags, fluff words, and filler. Be direct, clear, and valuable. Short and concise replies are preferred; only elaborate when necessary.'
               },
               {
                 role: 'user',
-                content: `Generate a reply to this tweet: "${request.tweet}". Keep it under 280 characters.`
+                content: `Generate a reply to this tweet: "${request.tweet}". Keep it under 280 characters. Return only the reply text, without double quotes.`
               }
             ],
             repetition_penalty: 1.1,
