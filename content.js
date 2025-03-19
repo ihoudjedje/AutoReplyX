@@ -5,19 +5,19 @@ function extractTweetText() {
   return tweetTextElement;
 }
 
-// Function to generate a reply using Ollama via background script
-async function generateOllamaReply(tweetText) {
+// Function to generate a reply using AI via background script
+async function generateReply(tweetText) {
   try {
     console.log('>>> Sending tweet to background script:', tweetText);
-    
+
     // Send message to background script
     const response = await chrome.runtime.sendMessage({
       action: 'generateReply',
       tweet: tweetText
     });
-    
-    console.log('>>> Ollama response from background:', response);
-    
+
+    console.log('>>> AI response from background:', response);
+
     if (response && response.success) {
       return response.reply.trim();
     } else {
@@ -28,7 +28,7 @@ async function generateOllamaReply(tweetText) {
       return "Thanks for sharing! 🙌"; // Fallback response
     }
   } catch (error) {
-    console.error('>>> Error in generateOllamaReply:', error);
+    console.error('>>> Error in generateReply:', error);
     return "Thanks for sharing! 🙌"; // Fallback response
   }
 }
@@ -51,7 +51,7 @@ function focusReplyInput() {
       return replyInput;
     }
   }
-  
+
   console.log('Reply input not found');
   return null;
 }
@@ -65,14 +65,14 @@ function setReplyText(inputElement, text) {
     try {
       isProcessing = true;
       console.log('>>> Setting reply text:', text);
-      
+
       // Remove the "autox" trigger
       const currentText = inputElement.textContent;
       const cleanText = currentText.replace('autox', '').trim();
-      
+
       // Set the new text (original text without autox + our response)
       const newText = cleanText + (cleanText ? ' ' : '') + text;
-      
+
       // Use a single method to set the text and dispatch the input event
       inputElement.textContent = newText;
       inputElement.dispatchEvent(new InputEvent('input', {
@@ -81,7 +81,7 @@ function setReplyText(inputElement, text) {
         inputType: 'insertText',
         data: newText
       }));
-      
+
     } finally {
       // Reset the flag after a short delay to allow the mutation observer to process
       setTimeout(() => {
@@ -94,13 +94,13 @@ function setReplyText(inputElement, text) {
 // Function to handle text changes
 async function handleTextChange(element) {
   if (isProcessing) return; // Skip if already processing
-  
+
   const text = element.textContent || '';
   if (text.toLowerCase().includes('autox')) {
     console.log('>>> autox trigger detected');
     const tweetText = extractTweetText();
     if (tweetText) {
-      const response = await generateOllamaReply(tweetText);
+      const response = await generateReply(tweetText);
       setReplyText(element, response);
     }
   }
@@ -109,7 +109,7 @@ async function handleTextChange(element) {
 // Watch for input changes in any editable content
 const observer = new MutationObserver((mutations) => {
   if (isProcessing) return; // Skip if already processing
-  
+
   mutations.forEach(mutation => {
     // Check if this is a text change in a contenteditable element
     if (mutation.type === 'characterData') {
@@ -139,7 +139,7 @@ observer.observe(document.body, {
 // Add input event listener as a backup
 document.addEventListener('input', (e) => {
   if (isProcessing) return; // Skip if already processing
-  
+
   const element = e.target.closest('.public-DraftEditor-content[contenteditable="true"]');
   if (element) {
     handleTextChange(element);

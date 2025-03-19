@@ -8,12 +8,17 @@
     "scripting"
   ],
   "host_permissions": [
-    "http://localhost:11434/*"
+    "https://api.awanllm.com/*"
   ],
   "content_scripts": [
     {
-      "matches": ["https://twitter.com/*", "https://x.com/*"],
-      "js": ["content.js"],
+      "matches": [
+        "https://twitter.com/*",
+        "https://x.com/*"
+      ],
+      "js": [
+        "content.js"
+      ],
       "run_at": "document_end"
     }
   ],

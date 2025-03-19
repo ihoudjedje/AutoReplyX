@@ -2,21 +2,9 @@ chrome.runtime.onInstalled.addListener(() => {
   console.log('X AI Reply Generator extension installed');
 });
 
-// Function to check available models
-async function getAvailableModels() {
-  try {
-    const response = await fetch('http://localhost:11434/api/tags');
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    const data = await response.json();
-    console.log('>>> Available models:', data);
-    return data;
-  } catch (error) {
-    console.error('>>> Error fetching models:', error);
-    throw error;
-  }
-}
+// awanllm API configuration
+const AWANLLM_API_URL = 'https://api.awanllm.com/v1/chat/completions';
+const AWANLLM_API_KEY = '71c8f6bd-a0b4-447e-8962-00e6eda02791';
 
 // Listen for messages from content script
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
@@ -24,41 +12,52 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     // Handle the async operation properly
     (async () => {
       try {
-        console.log('>>> Sending request to Ollama with tweet:', request.tweet);
-        
-        // First, let's check available models
-        await getAvailableModels();
-        
-        const response = await fetch('http://localhost:11434/api/generate', {
+        console.log('>>> Sending tweet to awanllm API:', request.tweet);
+
+        const response = await fetch(AWANLLM_API_URL, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${AWANLLM_API_KEY}`
           },
           body: JSON.stringify({
-            model: 'llama3:latest',  // Using llama2 as default, will adjust based on available models
-            prompt: `You are a friendly and engaging social media user. Generate a concise reply (max 280 characters) to the following tweet. The reply should be relevant, add value to the conversation, and include appropriate emojis where it makes sense. Be natural and conversational.
-
-Tweet: "${request.tweet}"
-
-Your reply (remember to keep it under 280 characters):`,
+            model: 'Meta-Llama-3-8B-Instruct',
+            messages: [
+              {
+                role: 'system',
+                content: 'You are a friendly and engaging social media user. Generate concise replies (max 280 characters) that are relevant, add value to the conversation, and include appropriate emojis where it makes sense. Be natural and conversational.'
+              },
+              {
+                role: 'user',
+                content: `Generate a reply to this tweet: "${request.tweet}". Keep it under 280 characters.`
+              }
+            ],
+            repetition_penalty: 1.1,
+            temperature: 0.7,
+            top_p: 0.9,
+            top_k: 40,
+            max_tokens: 150,
             stream: false
           })
         });
 
         if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(`HTTP error! status: ${response.status}, body: ${errorText}`);
+          const errorData = await response.json();
+          throw new Error(`awanllm API error: ${response.status}, details: ${JSON.stringify(errorData)}`);
         }
 
         const data = await response.json();
-        console.log('>>> Ollama raw response:', data);
-        
-        if (!data.response) {
-          throw new Error('No response from Ollama');
+        console.log('>>> awanllm raw response:', data);
+
+        if (!data.choices || data.choices.length === 0) {
+          throw new Error('No response from awanllm');
         }
 
+        // Get the response text from the awanllm API
+        const replyText = data.choices[0].message.content;
+
         // Clean up the response to ensure it's Twitter-friendly
-        let cleanResponse = data.response
+        let cleanResponse = replyText
           .trim()
           // Remove any "Reply:" or similar prefixes that the model might add
           .replace(/^(Reply:|Response:|Your reply:|Here's a reply:|A reply:)/i, '')
@@ -71,35 +70,13 @@ Your reply (remember to keep it under 280 characters):`,
           stack: error.stack,
           error: error
         });
-        sendResponse({ 
-          success: false, 
+        sendResponse({
+          success: false,
           reply: "Thanks for sharing! 🙌",
-          error: error.message 
+          error: error.message
         });
       }
     })();
     return true; // Will respond asynchronously
   }
 });
-
-// Function to generate reply using Ollama
-async function generateReply(tweetText) {
-  const response = await fetch('http://localhost:11434/api/generate', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'mistral',
-      prompt: `Generate a friendly and engaging reply to this tweet. The reply should be concise (max 280 characters) and relevant to the tweet's content. Add appropriate emojis if relevant.
-
-Tweet: "${tweetText}"
-
-Reply:`,
-      stream: false
-    })
-  });
-
-  const data = await response.json();
-  return data.response;
-}
