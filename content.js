@@ -1,35 +1,24 @@
 // Function to extract tweet text from the tweet element
 function extractTweetText() {
   const tweetTextElement = document.querySelector('[data-testid="tweetText"]').innerText;
-  console.log('>>> tweet text:', tweetTextElement);
   return tweetTextElement;
 }
 
 // Function to generate a reply using AI via background script
 async function generateReply(tweetText) {
   try {
-    console.log('>>> Sending tweet to background script:', tweetText);
-
-    // Send message to background script
     const response = await chrome.runtime.sendMessage({
       action: 'generateReply',
       tweet: tweetText
     });
 
-    console.log('>>> AI response from background:', response);
-
     if (response && response.success) {
       return response.reply.trim();
     } else {
-      console.error('>>> Failed to generate reply:', {
-        response: response,
-        error: response?.error
-      });
-      return "Thanks for sharing! 🙌"; // Fallback response
+      return "AutoX Internal Error";
     }
   } catch (error) {
-    console.error('>>> Error in generateReply:', error);
-    return "Thanks for sharing! 🙌"; // Fallback response
+    return "AutoX Internal Error";
   }
 }
 
@@ -46,13 +35,11 @@ function focusReplyInput() {
   for (const selector of selectors) {
     const replyInput = document.querySelector(selector);
     if (replyInput) {
-      console.log('>>> Found reply input:', selector);
       replyInput.focus();
       return replyInput;
     }
   }
 
-  console.log('Reply input not found');
   return null;
 }
 
@@ -64,16 +51,12 @@ function setReplyText(inputElement, text) {
   if (inputElement && !isProcessing) {
     try {
       isProcessing = true;
-      console.log('>>> Setting reply text:', text);
 
-      // Remove the "autox" trigger
       const currentText = inputElement.textContent;
       const cleanText = currentText.replace('autox', '').trim();
 
-      // Set the new text (original text without autox + our response)
       const newText = cleanText + (cleanText ? ' ' : '') + text;
 
-      // Use a single method to set the text and dispatch the input event
       inputElement.textContent = newText;
       inputElement.dispatchEvent(new InputEvent('input', {
         bubbles: true,
@@ -83,7 +66,6 @@ function setReplyText(inputElement, text) {
       }));
 
     } finally {
-      // Reset the flag after a short delay to allow the mutation observer to process
       setTimeout(() => {
         isProcessing = false;
       }, 100);
@@ -97,7 +79,6 @@ async function handleTextChange(element) {
 
   const text = element.textContent || '';
   if (text.toLowerCase().includes('autox')) {
-    console.log('>>> autox trigger detected');
     const tweetText = extractTweetText();
     if (tweetText) {
       const response = await generateReply(tweetText);

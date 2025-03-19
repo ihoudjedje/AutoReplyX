@@ -1,5 +1,4 @@
 chrome.runtime.onInstalled.addListener(() => {
-  console.log('X AI Reply Generator extension installed');
 });
 
 // awanllm API configuration
@@ -12,8 +11,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     // Handle the async operation properly
     (async () => {
       try {
-        console.log('>>> Sending tweet to awanllm API:', request.tweet);
-
         const response = await fetch(AWANLLM_API_URL, {
           method: 'POST',
           headers: {
@@ -47,7 +44,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         }
 
         const data = await response.json();
-        console.log('>>> awanllm raw response:', data);
 
         if (!data.choices || data.choices.length === 0) {
           throw new Error('No response from awanllm');
@@ -65,14 +61,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
         sendResponse({ success: true, reply: cleanResponse });
       } catch (error) {
-        console.error('>>> Error details:', {
-          message: error.message,
-          stack: error.stack,
-          error: error
-        });
         sendResponse({
           success: false,
-          reply: "Thanks for sharing! 🙌",
+          reply: "AutoX Internal Error",
           error: error.message
         });
       }
