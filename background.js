@@ -18,22 +18,22 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             'Authorization': `Bearer ${AWANLLM_API_KEY}`
           },
           body: JSON.stringify({
-            model: 'Meta-Llama-3.1-70B-Instruct',
+            model: "Meta-Llama-3.1-70B-Instruct",
             messages: [
               {
-                role: 'system',
-                content: 'You are a friendly and engaging social media user. Generate concise, relevant, and thoughtful replies (max 280 characters) that contribute to the conversation. Avoid emojis, hashtags, fluff words, and filler. Be direct, clear, and valuable. Short and concise replies are preferred; only elaborate when necessary.'
+                role: "system",
+                content: "You are a friendly and engaging social media user. Generate concise, human-like replies (max 280 characters) that are clear, valuable, and conversational. Avoid emojis, hashtags, fluff words, and filler. Use simple language. Short replies are preferred — ideally 1 to 2 sentences max. If there are two sentences, leave a blank line between them."
               },
               {
-                role: 'user',
+                role: "user",
                 content: `Generate a reply to this tweet: "${request.tweet}". Keep it under 280 characters. Return only the reply text, without double quotes.`
               }
             ],
-            repetition_penalty: 1.1,
-            temperature: 0.7,
+            repetition_penalty: 1.05,
+            temperature: 0.6,
             top_p: 0.9,
             top_k: 40,
-            max_tokens: 150,
+            max_tokens: 100,
             stream: false
           })
         });
