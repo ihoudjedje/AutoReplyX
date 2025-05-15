@@ -1,8 +1,8 @@
 // Function to extract tweet text from the tweet element
 function extractTweetText() {
   try {
-    const tweetTextElement = document.querySelector('[data-testid="tweetText"]')?.innerText;
-    return tweetTextElement || "No tweet text found";
+    const tweetTextElement = document.querySelector('[data-testid="tweetText"]');
+    return tweetTextElement?.textContent || "No tweet text found";
   } catch (error) {
     console.error("Error extracting tweet text:", error);
     return "No tweet text found";
@@ -47,6 +47,8 @@ function insertTextAtCursor(inputElement, text) {
     if (currentText.includes(placeholder)) {
       // Select all content
       const selection = window.getSelection();
+      if (!selection) return false;
+
       const range = document.createRange();
       range.selectNodeContents(inputElement);
       selection.removeAllRanges();
@@ -90,11 +92,11 @@ function insertTextAtCursor(inputElement, text) {
   }
 }
 
-// Handle keyboard shortcut (Command+X)
+// Handle keyboard shortcut
 async function handleKeyboardShortcut(e) {
-  // Check if Command+X (metaKey+x) was pressed
+  // Default keyboard shortcut (Command+X)
   if (e.metaKey && e.key === 'x') {
-    e.preventDefault(); // Prevent default cut behavior
+    e.preventDefault(); // Prevent default behavior
 
     // Make sure we're in an editor
     const activeElement = document.activeElement;

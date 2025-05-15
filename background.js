@@ -1,8 +1,6 @@
-chrome.runtime.onInstalled.addListener(() => {});
+import { config } from './config.js';
 
-// awanllm API configuration
-const AWANLLM_API_URL = "https://api.awanllm.com/v1/chat/completions";
-const AWANLLM_API_KEY = "71c8f6bd-a0b4-447e-8962-00e6eda02791";
+chrome.runtime.onInstalled.addListener(() => {});
 
 // Listen for messages from content script
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
@@ -10,31 +8,24 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     // Handle the async operation properly
     (async () => {
       try {
-        const response = await fetch(AWANLLM_API_URL, {
+        const response = await fetch(config.AWANLLM_API_URL, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${AWANLLM_API_KEY}`,
+            Authorization: `Bearer ${config.AWANLLM_API_KEY}`,
           },
           body: JSON.stringify({
-            model: "Meta-Llama-3.1-70B-Instruct",
+            ...config.MODEL_CONFIG,
             messages: [
               {
                 role: "system",
-                content:
-                  "You are a friendly and engaging social media user. Use clear, valuable, and conversational language. Avoid emojis, hashtags, and unnecessary fluff. Keep replies concise and human-like.",
+                content: config.SYSTEM_PROMPT,
               },
               {
                 role: "user",
-                content: `Generate a reply to this tweet: "${request.tweet}". Keep it under 280 characters, use simple language, and avoid filler words. Ensure the reply is short — ideally 1 or 2 sentences. Avoid complex punctuation like dashes or semicolons. Finally, before posting your final reponse, turn all the text to lowercase, and break the line with an emply line between phrases.`,
+                content: config.USER_PROMPT_TEMPLATE(request.tweet),
               },
             ],
-            repetition_penalty: 1.05,
-            temperature: 0.6,
-            top_p: 0.9,
-            top_k: 40,
-            max_tokens: 100,
-            stream: false,
           }),
         });
 
