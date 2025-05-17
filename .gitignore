@@ -23,9 +23,6 @@ dist-ssr
 *.sln
 *.sw?
 
-# Configuration files
-config.js
-
 # IDE and editor files
 .vscode/
 .idea/

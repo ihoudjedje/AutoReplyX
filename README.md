@@ -78,10 +78,6 @@ You can customize the extension by modifying the following in `config.js`:
 - `MODEL_CONFIG`: Model parameters like temperature, max tokens, etc.
 - `KEYBOARD_SHORTCUT`: Keyboard shortcut configuration
 
-## Security Note
-
-Never commit your API key to version control. The `config.js` file is included in `.gitignore` by default.
-
 ## License
 
 MIT License - feel free to use and modify as needed.
