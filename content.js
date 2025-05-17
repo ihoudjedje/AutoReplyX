@@ -110,7 +110,27 @@ function showToast(message) {
   // Create toast element
   const toast = document.createElement("div");
   toast.className = "autoreplyx-toast";
-  toast.textContent = message;
+
+  // Create logo image
+  const logo = document.createElement("img");
+  logo.src = chrome.runtime.getURL("assets/icon48.png");
+  logo.style.cssText = `
+    width: 24px;
+    height: 24px;
+    margin-right: 12px;
+    vertical-align: middle;
+  `;
+
+  // Create message text
+  const messageText = document.createElement("span");
+  messageText.textContent = message;
+  messageText.style.cssText = `
+    vertical-align: middle;
+  `;
+
+  // Add logo and message to toast
+  toast.appendChild(logo);
+  toast.appendChild(messageText);
 
   // Style the toast
   Object.assign(toast.style, {
@@ -131,6 +151,9 @@ function showToast(message) {
     textAlign: "center",
     backdropFilter: "blur(8px)",
     border: "1px solid rgba(255, 255, 255, 0.1)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
   });
 
   // Add to document

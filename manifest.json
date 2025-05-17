@@ -28,7 +28,7 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["config.js"],
+      "resources": ["config.js", "assets/icon48.png"],
       "matches": ["https://twitter.com/*", "https://x.com/*"]
     }
   ],

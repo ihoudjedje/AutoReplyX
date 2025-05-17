@@ -24,7 +24,7 @@ A Chrome extension that automatically generates and posts replies to tweets usin
 2. Configure the extension:
 
    - Open `config.js`
-   - Add your AwanLLM API key to the `AWANLLM_API_KEY` field
+   - Go to [Awanllm](https://www.awanllm.com/) and add your AwanLLM API key to the `AWANLLM_API_KEY` field. It's 100% FREE.
    - (Optional) Customize the prompts and model settings
    - (Optional) Configure your preferred keyboard shortcut
 
