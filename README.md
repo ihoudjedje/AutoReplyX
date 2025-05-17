@@ -2,6 +2,8 @@
 
 A Chrome extension that automatically generates and posts replies to tweets using the AwanLLM API.
 
+[![Watch the demo](https://img.youtube.com/vi/ZR228qD65Dk/0.jpg)](https://www.youtube.com/watch?v=ZR228qD65Dk)
+
 ## Features
 
 - Automatically generates human-like replies to tweets
